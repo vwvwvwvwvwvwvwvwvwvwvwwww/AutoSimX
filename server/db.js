@@ -133,12 +133,37 @@ function seedSimulators(db) {
   for (const r of rows) ins.run(r[0], r[1], r[2], r[3]);
 }
 
+function normalizeAdminEmailFromEnv() {
+  return String(process.env.INITIAL_ADMIN_EMAIL || "admin@autosim.local")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+/** Пароль первого админа при пустой БД и при синхронизации (если не отключено). */
+function resolveAdminPasswordForSync() {
+  if (process.env.AUTOSIM_SYNC_DEFAULT_ADMIN === "0") {
+    return null;
+  }
+  const raw = process.env.INITIAL_ADMIN_PASSWORD;
+  if (raw !== undefined && raw !== null) {
+    const t = String(raw).trim();
+    if (t.length >= 1) return t;
+  }
+  return "admin-change-me";
+}
+
 function seedInitialAdmin(db) {
   const count = db.prepare("SELECT COUNT(*) AS c FROM users").get().c;
   if (count > 0) return;
 
-  const email = process.env.INITIAL_ADMIN_EMAIL || "admin@autosim.local";
-  const password = process.env.INITIAL_ADMIN_PASSWORD || "admin-change-me";
+  const email = normalizeAdminEmailFromEnv();
+  const fromSync = resolveAdminPasswordForSync();
+  const password =
+    fromSync !== null
+      ? fromSync
+      : String(process.env.INITIAL_ADMIN_PASSWORD || "admin-change-me").trim() ||
+        "admin-change-me";
   const hash = bcrypt.hashSync(password, 10);
 
   db.prepare(
@@ -154,30 +179,47 @@ function seedInitialAdmin(db) {
 }
 
 /**
- * Если в окружении задан INITIAL_ADMIN_PASSWORD, при каждом запуске
- * обновляет хеш пароля у администратора с email INITIAL_ADMIN_EMAIL
- * (или admin@autosim.local). Так на Railway пароль совпадает с Variables
- * даже если база уже была создана раньше с другим паролем.
+ * Если в таблице users нет ни одной роли admin (например, странная БД),
+ * создаём администратора с email/паролем из окружения или демо-значениями.
+ */
+function ensureAdminUserExists(db) {
+  const n = Number(db.prepare(`SELECT COUNT(*) AS c FROM users WHERE role = 'admin'`).get().c);
+  if (n > 0) return;
+
+  const email = normalizeAdminEmailFromEnv();
+  const fromSync = resolveAdminPasswordForSync();
+  const password =
+    fromSync !== null
+      ? fromSync
+      : String(process.env.INITIAL_ADMIN_PASSWORD || "admin-change-me").trim() ||
+        "admin-change-me";
+  const hash = bcrypt.hashSync(password, 10);
+  db.prepare(
+    `INSERT INTO users (email, password_hash, role, display_name)
+     VALUES (?, ?, 'admin', ?)`
+  ).run(email, hash, "Администратор");
+  console.warn("[autosim] В БД не было администратора — создан:", email);
+}
+
+/**
+ * При каждом запуске (если не AUTOSIM_SYNC_DEFAULT_ADMIN=0) выставляет пароль
+ * администратора: из INITIAL_ADMIN_PASSWORD или демо «admin-change-me».
+ * Так вход с кнопки «Админ» совпадает с сервером без ручной правки SQLite.
  */
 function syncAdminPasswordFromEnv(db) {
-  const rawPwd = process.env.INITIAL_ADMIN_PASSWORD;
-  if (rawPwd === undefined || rawPwd === null) return;
-  const password = String(rawPwd).trim();
-  if (password.length < 1) return;
+  const password = resolveAdminPasswordForSync();
+  if (password === null) return;
 
-  const email = String(process.env.INITIAL_ADMIN_EMAIL || "admin@autosim.local")
-    .replace(/[\u200B-\u200D\uFEFF]/g, "")
-    .trim()
-    .toLowerCase();
+  const email = normalizeAdminEmailFromEnv();
 
   const row = db
     .prepare(`SELECT id FROM users WHERE lower(email) = lower(?) AND role = 'admin'`)
     .get(email);
   if (!row) {
     console.warn(
-      "[autosim] INITIAL_ADMIN_PASSWORD задан, но пользователь-админ с email",
+      "[autosim] Не найден admin с email",
       JSON.stringify(email),
-      "не найден — пропуск синхронизации пароля."
+      "— синхронизация пароля пропущена (проверьте INITIAL_ADMIN_EMAIL)."
     );
     return;
   }
@@ -186,10 +228,7 @@ function syncAdminPasswordFromEnv(db) {
   db.prepare(
     `UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?`
   ).run(hash, row.id);
-  console.warn(
-    "[autosim] Пароль администратора обновлён из INITIAL_ADMIN_PASSWORD для",
-    email
-  );
+  console.warn("[autosim] Пароль администратора синхронизирован для", email);
 }
 
 /** Демо-сотрудник и демо-клиент (один раз, если таких email ещё нет). */
@@ -469,6 +508,7 @@ function getDb() {
     _db = openDb();
     migrate(_db);
     seedInitialAdmin(_db);
+    ensureAdminUserExists(_db);
     syncAdminPasswordFromEnv(_db);
     seedDemoUsers(_db);
     seedAdminPanelDemo(_db);

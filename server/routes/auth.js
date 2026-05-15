@@ -55,7 +55,7 @@ function createAuthRouter(db) {
       .prepare(
         `SELECT id, email, password_hash, role, display_name,
                 COALESCE(bonus_points, 0) AS bonus_points
-         FROM users WHERE email = ?`
+         FROM users WHERE lower(email) = lower(?)`
       )
       .get(email);
 
