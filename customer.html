@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <meta name="description" content="Личный кабинет клиента AutoSimX" />
+  <title>Личный кабинет — AutoSimX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Golos+Text:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="shell-top"></div>
+  <main>
+    <section class="section page-intro">
+      <div class="container">
+        <p class="eyebrow"><a href="index.html">На главную</a></p>
+        <h1 class="section__title">Личный кабинет</h1>
+
+        <div id="customer-gate"></div>
+
+        <div id="customer-panel" hidden>
+          <div class="admin-toolbar">
+            <button type="button" class="btn btn--ghost" id="btn-logout-cust">Выйти</button>
+          </div>
+          <div id="customer-content" class="card" style="margin-top: 1.5rem; padding: 1.5rem"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div id="shell-bottom"></div>
+  <script src="site-config.js"></script>
+  <script src="js/dom.js"></script>
+  <script src="js/site-content-bootstrap.js"></script>
+  <script src="shell.js"></script>
+  <script src="js/animations.js" defer></script>
+  <script src="nav.js" defer></script>
+  <script src="js/api.js"></script>
+  <script src="js/customer.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Регистрация клиента AutoSimX" />
+  <title>Регистрация — AutoSimX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Golos+Text:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-page="register">
+  <div id="shell-top"></div>
+  <main>
+    <section class="section page-intro auth-page">
+      <div class="container auth-wrap">
+        <header class="auth-page__head">
+          <p class="eyebrow"><a href="index.html">На главную</a></p>
+          <h1 class="section__title auth-page__title">Регистрация</h1>
+          <p class="section__subtitle auth-page__lead">Учётная запись с ролью «клиент». Сотрудников и админов добавляет администратор.</p>
+        </header>
+        <form id="form-register" class="auth-form auth-panel" autocomplete="on">
+          <div class="form-row">
+            <label for="displayName">Имя (необязательно)</label>
+            <input id="displayName" name="displayName" type="text" autocomplete="name" />
+          </div>
+          <div class="form-row">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" required autocomplete="email" />
+          </div>
+          <div class="form-row">
+            <label for="password">Пароль (от 8 символов)</label>
+            <input id="password" name="password" type="password" required minlength="8" autocomplete="new-password" />
+          </div>
+          <button class="btn btn--primary" type="submit">Зарегистрироваться</button>
+          <p id="form-msg" class="form-msg" role="status"></p>
+        </form>
+        <p class="auth-alt">Уже есть аккаунт? <a href="login.html">Вход</a></p>
+      </div>
+    </section>
+  </main>
+  <div id="shell-bottom"></div>
+  <script src="site-config.js"></script>
+  <script src="js/dom.js"></script>
+  <script src="js/site-content-bootstrap.js"></script>
+  <script src="shell.js"></script>
+  <script src="js/animations.js" defer></script>
+  <script src="nav.js" defer></script>
+  <script src="js/api.js"></script>
+  <script src="js/register.js" defer></script>
+</body>
+</html>
