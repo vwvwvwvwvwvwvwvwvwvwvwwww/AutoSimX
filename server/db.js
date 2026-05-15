@@ -153,6 +153,45 @@ function seedInitialAdmin(db) {
   );
 }
 
+/**
+ * Если в окружении задан INITIAL_ADMIN_PASSWORD, при каждом запуске
+ * обновляет хеш пароля у администратора с email INITIAL_ADMIN_EMAIL
+ * (или admin@autosim.local). Так на Railway пароль совпадает с Variables
+ * даже если база уже была создана раньше с другим паролем.
+ */
+function syncAdminPasswordFromEnv(db) {
+  const rawPwd = process.env.INITIAL_ADMIN_PASSWORD;
+  if (rawPwd === undefined || rawPwd === null) return;
+  const password = String(rawPwd).trim();
+  if (password.length < 1) return;
+
+  const email = String(process.env.INITIAL_ADMIN_EMAIL || "admin@autosim.local")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim()
+    .toLowerCase();
+
+  const row = db
+    .prepare(`SELECT id FROM users WHERE lower(email) = lower(?) AND role = 'admin'`)
+    .get(email);
+  if (!row) {
+    console.warn(
+      "[autosim] INITIAL_ADMIN_PASSWORD задан, но пользователь-админ с email",
+      JSON.stringify(email),
+      "не найден — пропуск синхронизации пароля."
+    );
+    return;
+  }
+
+  const hash = bcrypt.hashSync(password, 10);
+  db.prepare(
+    `UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?`
+  ).run(hash, row.id);
+  console.warn(
+    "[autosim] Пароль администратора обновлён из INITIAL_ADMIN_PASSWORD для",
+    email
+  );
+}
+
 /** Демо-сотрудник и демо-клиент (один раз, если таких email ещё нет). */
 function seedDemoUsers(db) {
   if (process.env.AUTOSIM_SKIP_DEMO_USERS === "1") return;
@@ -430,6 +469,7 @@ function getDb() {
     _db = openDb();
     migrate(_db);
     seedInitialAdmin(_db);
+    syncAdminPasswordFromEnv(_db);
     seedDemoUsers(_db);
     seedAdminPanelDemo(_db);
   }
