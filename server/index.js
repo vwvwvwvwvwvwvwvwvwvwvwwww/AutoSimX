@@ -67,6 +67,11 @@ app.use(
     index: ["index.html"],
     extensions: ["html"],
     dotfiles: "deny",
+    setHeaders(res, filePath) {
+      if (String(filePath).toLowerCase().endsWith(".html")) {
+        res.setHeader("Cache-Control", "no-cache, must-revalidate");
+      }
+    },
   })
 );
 

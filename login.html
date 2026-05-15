@@ -20,21 +20,6 @@
           <h1 class="section__title auth-page__title">Вход</h1>
           <p class="section__subtitle auth-page__lead">Одна форма: после входа откроется кабинет администратора, сотрудника или клиента.</p>
         </header>
-        <div class="auth-panel auth-panel--hint">
-          <p class="auth-panel__eyebrow">Демо-доступ</p>
-          <p class="auth-demo-hint auth-demo-hint--panel">
-            Если в базе есть сид: сотрудник <code>employee@autosim.local</code> /
-            <code>EmployeeDemo1</code> · клиент <code>customer@autosim.local</code> /
-            <code>CustomerDemo1</code> · админ <code>admin@autosim.local</code> /
-            <code>admin-change-me</code>.
-            <span class="auth-demo-hint__extra">
-              Страница должна открываться с <strong>того же порта, что и сервер</strong> (по умолчанию
-              <code>http://localhost:3888/…</code>), иначе вход не дойдёт до API. Если пароль «из readme»
-              не подходит — в папке проекта выполните
-              <code>node server/scripts/reset-demo-passwords.js</code> и попробуйте снова.
-            </span>
-          </p>
-        </div>
         <form id="form-login" class="auth-form auth-panel" autocomplete="on">
           <div class="form-row">
             <label for="email">Email</label>

@@ -928,10 +928,15 @@ body[data-page="home"] .burger {
 .footer__auth a:hover { color: #fafafa; }
 
 /* Формы и кабинеты */
-.auth-wrap { max-width: 420px; margin-inline: auto; }
+.auth-wrap {
+  width: 100%;
+  max-width: 420px;
+  margin-inline: auto;
+  box-sizing: border-box;
+}
 
 .auth-page .auth-wrap {
-  max-width: 460px;
+  max-width: min(460px, 100%);
 }
 
 .auth-page__head {
@@ -960,63 +965,11 @@ body[data-page="home"] .burger {
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.38);
 }
 
-.auth-panel--hint {
-  margin-top: 1.35rem;
-}
-
-.auth-panel__eyebrow {
-  margin: 0 0 0.55rem;
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--garage-red);
-}
-
-.auth-demo-hint {
-  margin: 0 0 1rem;
-  padding: 0.75rem 1rem;
-  font-size: 0.8rem;
-  line-height: 1.55;
-  color: var(--text-muted);
-  border-left: 3px solid var(--accent-hot);
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 0 8px 8px 0;
-}
-
-.auth-demo-hint--panel {
-  margin: 0;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-}
-
-.auth-demo-hint__extra {
-  display: block;
-  margin-top: 0.65rem;
-  padding-top: 0.65rem;
-  border-top: 1px solid rgba(250, 250, 250, 0.08);
-  font-size: 0.76rem;
-  line-height: 1.5;
-  color: rgba(212, 212, 216, 0.92);
-}
-
-.auth-demo-hint__extra code {
-  font-size: 0.72rem;
-}
-.auth-demo-hint code {
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 0.78rem;
-  color: #e4e4e7;
-  word-break: break-all;
-}
 .auth-form { padding: 1.5rem 1.35rem; margin-top: 1.25rem; }
 
 .auth-page .auth-form.auth-panel {
   margin-top: 1rem;
-  padding: 1.45rem 1.35rem 1.35rem;
+  padding: clamp(1.1rem, 4vw, 1.45rem) clamp(1rem, 4vw, 1.35rem) 1.35rem;
 }
 
 .auth-page .auth-form.auth-panel .btn--primary {
@@ -1038,12 +991,26 @@ body[data-page="home"] .burger {
   text-transform: uppercase;
   color: var(--text-muted);
   margin-bottom: 0.45rem;
+  word-wrap: break-word;
 }
 
 .auth-quick-fill__btns {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.45rem;
+}
+
+@media (max-width: 380px) {
+  .auth-quick-fill__btns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.auth-quick-fill__btns .btn {
+  min-width: 0;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .form-row { margin-bottom: 0.95rem; }
