@@ -68,10 +68,3 @@
       });
   });
 })();
-
-
-
-if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 16) {
-  console.warn('[WARNING] JWT_SECRET is weak or missing!');
-}
-
