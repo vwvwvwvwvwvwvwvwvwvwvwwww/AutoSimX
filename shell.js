@@ -203,6 +203,10 @@
     D.setContent(mountBottom, buildFooter());
   }
 
+  if (typeof window.autosimBindNav === "function") {
+    window.autosimBindNav();
+  }
+
   /** Декоративная машина, едет вдоль экрана при вертикальной прокрутке страницы */
   function initScrollCar() {
     if (document.getElementById("scroll-car-strip")) return;

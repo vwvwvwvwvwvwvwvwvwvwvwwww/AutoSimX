@@ -1,10 +1,14 @@
 (function () {
   "use strict";
 
+  var homeScrollBound = false;
+
   function bind() {
     var burger = document.getElementById("burger");
     var nav = document.getElementById("nav");
     if (!burger || !nav) return;
+    if (burger.getAttribute("data-nav-bound") === "1") return;
+    burger.setAttribute("data-nav-bound", "1");
 
     function setOpen(open) {
       burger.setAttribute("aria-expanded", open ? "true" : "false");
@@ -29,9 +33,11 @@
 
   function bindHomeHeaderScroll() {
     if (document.body.getAttribute("data-page") !== "home") return;
+    if (homeScrollBound) return;
     var header = document.querySelector(".header");
     var hero = document.querySelector(".hero");
     if (!header || !hero) return;
+    homeScrollBound = true;
 
     function onScroll() {
       var threshold = Math.min(hero.offsetHeight * 0.28, 220);
@@ -42,13 +48,17 @@
     window.addEventListener("scroll", onScroll, { passive: true });
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", function () {
-      bind();
-      bindHomeHeaderScroll();
-    });
-  } else {
+  function tryBindAll() {
     bind();
     bindHomeHeaderScroll();
+  }
+
+  /** Вызывается из shell.js после вставки шапки (шапка может появиться позже DOMContentLoaded). */
+  window.autosimBindNav = tryBindAll;
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", tryBindAll);
+  } else {
+    tryBindAll();
   }
 })();
