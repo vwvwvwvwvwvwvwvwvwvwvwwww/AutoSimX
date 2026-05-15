@@ -23,6 +23,23 @@ function normalizeLoginPassword(raw) {
     .replace(/\u2212/g, "-");
 }
 
+function trySignAndSetCookie(res, user) {
+  try {
+    const token = signToken({
+      sub: user.id,
+      role: user.role,
+      email: user.email,
+    });
+    res.cookie(COOKIE_NAME, token, authCookieOptions());
+    return null;
+  } catch (e) {
+    console.error("[auth] выдача JWT/cookie:", e);
+    return e && e.message
+      ? e.message
+      : "Не удалось выдать сессию (проверьте JWT_SECRET на сервере).";
+  }
+}
+
 function createAuthRouter(db) {
   const router = express.Router();
 
@@ -51,13 +68,11 @@ function createAuthRouter(db) {
       return res.status(401).json({ error: "Неверный email или пароль" });
     }
 
-    const token = signToken({
-      sub: user.id,
-      role: user.role,
-      email: user.email,
-    });
+    const cookieErr = trySignAndSetCookie(res, user);
+    if (cookieErr) {
+      return res.status(503).json({ error: cookieErr });
+    }
 
-    res.cookie(COOKIE_NAME, token, authCookieOptions());
     res.json({
       user: {
         id: user.id,
@@ -107,12 +122,10 @@ function createAuthRouter(db) {
         )
         .get(info.lastInsertRowid);
 
-      const token = signToken({
-        sub: user.id,
-        role: user.role,
-        email: user.email,
-      });
-      res.cookie(COOKIE_NAME, token, authCookieOptions());
+      const cookieErr = trySignAndSetCookie(res, user);
+      if (cookieErr) {
+        return res.status(503).json({ error: cookieErr });
+      }
       res.status(201).json({
         user: {
           id: user.id,
