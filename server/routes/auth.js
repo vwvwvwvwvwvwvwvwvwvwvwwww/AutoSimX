@@ -136,7 +136,9 @@ function createAuthRouter(db) {
         },
       });
     } catch (e) {
-      if (String(e.message).includes("UNIQUE")) {
+      const msg = e && typeof e.message === "string" ? e.message : "";
+      const code = e && typeof e.code === "string" ? e.code : "";
+      if (msg.includes("UNIQUE") || code === "SQLITE_CONSTRAINT_UNIQUE") {
         return res.status(409).json({ error: "Email уже зарегистрирован" });
       }
       throw e;

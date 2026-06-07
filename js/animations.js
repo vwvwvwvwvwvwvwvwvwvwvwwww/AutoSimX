@@ -28,6 +28,8 @@
     "main .contact-channel",
     "main .auth-form",
     "main .auth-panel",
+    "main .cabinet-panel",
+    "main .notif-item",
   ].join(", ");
 
   function mark(el) {

@@ -34,8 +34,8 @@
     });
 
     var h2 = D.el("h2", {
-      className: "section__title",
-      style: { marginTop: "0", fontSize: "1.15rem" },
+      className: "cabinet-section__title",
+      style: { marginTop: "0" },
       textContent: "Новая бронь",
     });
     var lead = D.el("p", {
@@ -198,25 +198,11 @@
         textContent: "Уведомлений пока нет (появятся после подтверждения брони и сессий).",
       });
     }
-    var ul = D.el("ul", {
-      style: {
-        listStyle: "none",
-        padding: "0",
-        margin: "0",
-        display: "flex",
-        flexDirection: "column",
-        gap: "0.5rem",
-      },
-    });
+    var ul = D.el("ul", { className: "notif-list" });
     rows.forEach(function (n) {
       var unread = !n.read_at;
       var inner = D.el("div", {
-        style: {
-          display: "flex",
-          justifyContent: "space-between",
-          gap: "0.5rem",
-          alignItems: "flex-start",
-        },
+        className: "notif-item__row",
         children: [
           D.el("div", {
             children: [
@@ -240,12 +226,7 @@
       }
       ul.appendChild(
         D.el("li", {
-          className: "card",
-          style: {
-            padding: "0.85rem 1rem",
-            fontSize: "0.9rem",
-            borderColor: unread ? "rgba(248,113,113,0.35)" : "",
-          },
+          className: unread ? "notif-item notif-item--unread" : "notif-item",
           children: [inner],
         })
       );
@@ -297,21 +278,54 @@
         });
     });
 
+
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       var fm = document.getElementById("bk-form-msg");
       fm.textContent = "";
       fm.className = "form-msg";
       var fd = new FormData(form);
-      var slot = fd.get("slotStart");
-      var iso = new Date(slot);
+      var slotRaw = fd.get("slotStart");
+      var simRaw = fd.get("simulatorId");
+      var durRaw = fd.get("durationMinutes") || "60";
+
+      if (!slotRaw || !simRaw) {
+        fm.textContent = "Укажите стенд и время";
+        fm.className = "form-msg form-msg--error";
+        return;
+      }
+
+      var iso = new Date(slotRaw);
+      if (Number.isNaN(iso.getTime())) {
+        fm.textContent = "Некорректная дата";
+        fm.className = "form-msg form-msg--error";
+        return;
+      }
+
+      var simulatorId = parseInt(String(simRaw), 10);
+      var durationMinutes = parseInt(String(durRaw), 10);
+      if (!Number.isInteger(simulatorId) || simulatorId < 1) {
+        fm.textContent = "Выберите симулятор из списка";
+        fm.className = "form-msg form-msg--error";
+        return;
+      }
+      if (
+        !Number.isInteger(durationMinutes) ||
+        durationMinutes < 30 ||
+        durationMinutes > 240
+      ) {
+        fm.textContent = "Длительность: от 30 до 240 минут";
+        fm.className = "form-msg form-msg--error";
+        return;
+      }
+
       window.autosimApi
         .fetchJson("/api/bookings", {
           method: "POST",
           body: {
-            simulatorId: Number(fd.get("simulatorId")),
+            simulatorId: simulatorId,
             slotStart: iso.toISOString(),
-            durationMinutes: Number(fd.get("durationMinutes") || 60),
+            durationMinutes: durationMinutes,
           },
         })
         .then(function () {
@@ -321,7 +335,10 @@
           return refreshAll();
         })
         .catch(function (err) {
-          fm.textContent = err.message || "Ошибка";
+          fm.textContent =
+            err && typeof err.message === "string" && err.message
+              ? err.message
+              : "Ошибка";
           fm.className = "form-msg form-msg--error";
         });
     });
@@ -355,19 +372,26 @@
   }
 
   function buildDashboard(user, sims) {
-    var p1 = D.el("p");
-    p1.appendChild(document.createTextNode("Вы вошли как "));
-    p1.appendChild(D.el("strong", { textContent: user.email }));
-    p1.appendChild(document.createTextNode(" · бонусы: "));
-    p1.appendChild(
-      D.el("strong", {
-        textContent: String(user.bonusPoints != null ? user.bonusPoints : 0),
-      })
-    );
+    var userBar = D.el("div", {
+      className: "cabinet-user",
+      children: [
+        D.el("span", {
+          children: [
+            document.createTextNode("Вы вошли как "),
+            D.el("strong", { textContent: user.email }),
+          ],
+        }),
+        D.el("span", {
+          className: "cabinet-user__bonus",
+          textContent:
+            "Бонусы: " + String(user.bonusPoints != null ? user.bonusPoints : 0),
+        }),
+      ],
+    });
 
     var hint = D.el("p", {
       className: "muted",
-      style: { fontSize: "0.9rem" },
+      style: { fontSize: "0.9rem", marginTop: "0" },
       textContent:
         "Сценарий: заявка → проверка слота → подтверждение админом → уведомление здесь.",
     });
@@ -375,20 +399,18 @@
     var built = buildBookingFormFragment(sims);
 
     var hBk = D.el("h2", {
-      className: "section__title",
-      style: { marginTop: "2rem", fontSize: "1.15rem" },
+      className: "cabinet-section__title",
       textContent: "Мои бронирования",
     });
     var divBk = D.el("div", { id: "cust-bookings" });
     var hNt = D.el("h2", {
-      className: "section__title",
-      style: { marginTop: "2rem", fontSize: "1.15rem" },
+      className: "cabinet-section__title",
       textContent: "Уведомления",
     });
     var divNt = D.el("div", { id: "cust-notifs" });
 
     D.setContent(out, [
-      p1,
+      userBar,
       hint,
       built.fragment,
       hBk,
@@ -456,3 +478,4 @@
     });
   }
 })();
+

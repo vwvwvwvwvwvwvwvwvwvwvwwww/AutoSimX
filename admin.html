@@ -18,7 +18,7 @@
       <div class="container">
         <p class="eyebrow"><a href="index.html">На главную</a></p>
         <h1 class="section__title">Админ-панель</h1>
-        <p class="section__subtitle">Просмотр пользователей и создание учётных записей сотрудников или клиентов.</p>
+        <p class="section__subtitle">Пользователи, оборудование (стенды), заявки, сессии и отчёты.</p>
 
         <div id="admin-gate" class="auth-wrap"></div>
 
@@ -68,6 +68,62 @@
             </div>
             <button class="btn btn--primary" type="submit">Создать</button>
             <p id="form-create-msg" class="form-msg" role="status"></p>
+          </form>
+
+          <h2 class="section__title" style="margin-top: 2.5rem; font-size: 1.25rem">Оборудование (стенды)</h2>
+          <p class="section__subtitle" style="max-width: 42rem">
+            Новые симуляторы появятся в бронировании у клиентов и в панели сотрудника. Код должен быть уникальным (например STD-3, VR-2).
+          </p>
+          <div class="data-table-wrap" style="margin-top: 1rem">
+            <table class="data-table" aria-label="Список стендов">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Код</th>
+                  <th>Название</th>
+                  <th>Тип</th>
+                  <th>₽/час</th>
+                  <th>Статус</th>
+                </tr>
+              </thead>
+              <tbody id="simulators-list"></tbody>
+            </table>
+          </div>
+
+          <form id="form-create-simulator" class="auth-form card studio-form studio-form--grid" style="max-width: 56rem; margin-top: 1.25rem">
+            <div class="form-row">
+              <label for="s-code">Код</label>
+              <input id="s-code" name="code" type="text" required maxlength="32" placeholder="STD-3" autocomplete="off" />
+            </div>
+            <div class="form-row">
+              <label for="s-name">Название</label>
+              <input id="s-name" name="name" type="text" required maxlength="120" placeholder="Стенд Standart 3" />
+            </div>
+            <div class="form-row">
+              <label for="s-type">Тип</label>
+              <select id="s-type" name="type" required>
+                <option value="standart">Standart</option>
+                <option value="pro">Pro</option>
+                <option value="vr">VR</option>
+                <option value="motion">Подвижная</option>
+                <option value="kids">Детский</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="s-rate">Тариф ₽/час</label>
+              <input id="s-rate" name="hourlyRateRub" type="number" min="1" max="999999" value="350" required />
+            </div>
+            <div class="form-row">
+              <label for="s-status">Статус</label>
+              <select id="s-status" name="status">
+                <option value="ready" selected>Готов к брони</option>
+                <option value="maintenance">На техобслуживании</option>
+              </select>
+            </div>
+            <div class="studio-form__full studio-form__actions">
+              <button class="btn btn--primary" type="submit">Добавить стенд</button>
+            </div>
+            <p id="form-create-simulator-msg" class="form-msg studio-form__full" role="status"></p>
           </form>
 
           <h2 class="section__title" style="margin-top: 2.5rem; font-size: 1.25rem">Тексты на сайте</h2>

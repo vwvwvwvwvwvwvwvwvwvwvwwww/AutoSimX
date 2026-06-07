@@ -4,6 +4,10 @@ const express = require("express");
 const { requireAuth, requireRoles } = require("../middleware/auth");
 const { notify } = require("../booking-utils");
 
+const SIM_TYPES = new Set(["standart", "pro", "vr", "motion", "kids"]);
+const SIM_STATUSES = new Set(["ready", "maintenance"]);
+const CODE_RE = /^[A-Za-z0-9][A-Za-z0-9\-_]*$/;
+
 function createSimulatorsRouter(db) {
   const router = express.Router();
 
@@ -16,6 +20,80 @@ function createSimulatorsRouter(db) {
       .all();
     res.json({ simulators: rows });
   });
+
+  /**
+   * Добавление стенда (оборудования). Только администратор.
+   * body: { code, name, type, hourlyRateRub?, status? }
+   */
+  router.post(
+    "/",
+    requireAuth,
+    requireRoles("admin"),
+    express.json(),
+    (req, res) => {
+      const code = String(req.body.code || "").trim();
+      const name = String(req.body.name || "").trim();
+      const type = String(req.body.type || "").trim();
+      const hourlyRateRub = Number(
+        req.body.hourlyRateRub ?? req.body.hourly_rate_rub ?? 300
+      );
+      const status = String(req.body.status || "ready").trim();
+
+      if (!code || code.length > 32) {
+        return res
+          .status(400)
+          .json({ error: "Укажите код стенда (до 32 символов)" });
+      }
+      if (!CODE_RE.test(code)) {
+        return res.status(400).json({
+          error: "Код: латиница, цифры, дефис или подчёркивание",
+        });
+      }
+      if (!name || name.length > 120) {
+        return res
+          .status(400)
+          .json({ error: "Укажите название (до 120 символов)" });
+      }
+      if (!SIM_TYPES.has(type)) {
+        return res.status(400).json({
+          error: "type: standart | pro | vr | motion | kids",
+        });
+      }
+      if (
+        !Number.isInteger(hourlyRateRub) ||
+        hourlyRateRub < 1 ||
+        hourlyRateRub > 999999
+      ) {
+        return res.status(400).json({ error: "hourlyRateRub: целое от 1 до 999999" });
+      }
+      if (!SIM_STATUSES.has(status)) {
+        return res.status(400).json({ error: "status: ready | maintenance" });
+      }
+
+      try {
+        const info = db
+          .prepare(
+            `INSERT INTO simulators (code, name, type, hourly_rate_rub, status)
+             VALUES (?, ?, ?, ?, ?)`
+          )
+          .run(code, name, type, hourlyRateRub, status);
+
+        const row = db
+          .prepare(
+            `SELECT id, code, name, type, hourly_rate_rub, status, updated_at
+             FROM simulators WHERE id = ?`
+          )
+          .get(info.lastInsertRowid);
+        res.status(201).json({ simulator: row });
+      } catch (e) {
+        if (String(e.message).includes("UNIQUE")) {
+          return res.status(409).json({ error: "Стенд с таким кодом уже есть" });
+        }
+        console.error(e);
+        return res.status(500).json({ error: "Не удалось добавить стенд" });
+      }
+    }
+  );
 
   /**
    * Техобслуживание: status maintenance → блок слотов; ready → разблок.

@@ -5,6 +5,9 @@
   var listEl = document.getElementById("users-list");
   var form = document.getElementById("form-create-user");
   var formMsg = document.getElementById("form-create-msg");
+  var simForm = document.getElementById("form-create-simulator");
+  var simFormMsg = document.getElementById("form-create-simulator-msg");
+  var simListEl = document.getElementById("simulators-list");
   var gate = document.getElementById("admin-gate");
   var chartBookings = null;
   var chartRevenue = null;
@@ -19,6 +22,61 @@
       completed: "Завершено",
     };
     return m[st] || st;
+  }
+
+  function simTypeRu(t) {
+    var m = {
+      standart: "Standart",
+      pro: "Pro",
+      vr: "VR",
+      motion: "Подвижная",
+      kids: "Детский",
+    };
+    return m[t] || t;
+  }
+
+  function simStatusRu(st) {
+    var m = { ready: "Готов", maintenance: "На ТО" };
+    return m[st] || st;
+  }
+
+  function renderSimulators(sims) {
+    if (!simListEl) return;
+    D.clear(simListEl);
+    if (!sims || !sims.length) {
+      simListEl.appendChild(
+        D.el("tr", {
+          children: [
+            D.el("td", {
+              colSpan: 6,
+              className: "muted",
+              textContent: "Стендов пока нет — добавьте первый через форму ниже.",
+            }),
+          ],
+        })
+      );
+      return;
+    }
+    sims.forEach(function (s) {
+      simListEl.appendChild(
+        D.el("tr", {
+          children: [
+            D.el("td", { textContent: String(s.id) }),
+            D.el("td", { textContent: String(s.code) }),
+            D.el("td", { textContent: String(s.name) }),
+            D.el("td", { textContent: simTypeRu(s.type) }),
+            D.el("td", { textContent: String(s.hourly_rate_rub) }),
+            D.el("td", { textContent: simStatusRu(s.status) }),
+          ],
+        })
+      );
+    });
+  }
+
+  function loadSimulators() {
+    return window.autosimApi.fetchJson("/api/simulators").then(function (data) {
+      renderSimulators(data.simulators || []);
+    });
   }
 
   function renderUsers(users) {
@@ -342,7 +400,7 @@
         document.getElementById("admin-panel").hidden = false;
         renderUsers(data.users || []);
         return loadPortal().then(function () {
-          return loadReports();
+          return Promise.all([loadReports(), loadSimulators()]);
         });
       })
       .catch(function (err) {
@@ -402,6 +460,50 @@
         .catch(function (err) {
           formMsg.textContent = err.message || "Ошибка";
           formMsg.className = "form-msg form-msg--error";
+        });
+    });
+  }
+
+  if (simForm) {
+    simForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (simFormMsg) {
+        simFormMsg.textContent = "";
+        simFormMsg.className = "form-msg studio-form__full";
+      }
+
+      var fd = new FormData(simForm);
+      var rateRaw = fd.get("hourlyRateRub");
+      var rate = parseInt(String(rateRaw), 10);
+
+      window.autosimApi
+        .fetchJson("/api/simulators", {
+          method: "POST",
+          body: {
+            code: String(fd.get("code") || "").trim(),
+            name: String(fd.get("name") || "").trim(),
+            type: String(fd.get("type") || "standart"),
+            hourlyRateRub: rate,
+            status: String(fd.get("status") || "ready"),
+          },
+        })
+        .then(function () {
+          if (simFormMsg) {
+            simFormMsg.textContent = "Стенд добавлен";
+            simFormMsg.className = "form-msg form-msg--ok studio-form__full";
+          }
+          simForm.reset();
+          var rateEl = document.getElementById("s-rate");
+          if (rateEl) rateEl.value = "350";
+          var statusEl = document.getElementById("s-status");
+          if (statusEl) statusEl.value = "ready";
+          return loadSimulators();
+        })
+        .catch(function (err) {
+          if (simFormMsg) {
+            simFormMsg.textContent = err.message || "Ошибка";
+            simFormMsg.className = "form-msg form-msg--error studio-form__full";
+          }
         });
     });
   }
