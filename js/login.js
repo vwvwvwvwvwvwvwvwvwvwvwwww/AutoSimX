@@ -21,27 +21,6 @@
   var msg = document.getElementById("form-msg");
   if (!form || !window.autosimApi) return;
 
-  var emailInput = document.getElementById("email");
-  var passwordInput = document.getElementById("password");
-
-  var fills = {
-    admin: { email: "admin@autosim.local", password: "admin-change-me" },
-    employee: { email: "employee@autosim.local", password: "EmployeeDemo1" },
-    customer: { email: "customer@autosim.local", password: "CustomerDemo1" },
-  };
-
-  form.querySelectorAll("[data-fill]").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var key = btn.getAttribute("data-fill");
-      var v = fills[key];
-      if (!v || !emailInput || !passwordInput) return;
-      emailInput.value = v.email;
-      passwordInput.value = v.password;
-      msg.textContent = "";
-      msg.className = "form-msg";
-    });
-  });
-
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     msg.textContent = "";
